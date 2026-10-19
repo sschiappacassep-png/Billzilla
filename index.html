@@ -1,0 +1,1395 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Billzilla</title>
+<meta name="description" content="Billzilla turns quick work notes into professional time-entry narratives in English or Spanish.">
+<style>
+:root{
+  --bg:#f5f3ee;--card:#fff;--ink:#1d2633;--muted:#5d6878;--line:#e2ddd2;
+  --navy:#14243d;--navy-2:#22385c;--gold:#a8834a;--gold-soft:#f5eddd;
+  --ok:#2e7a4d;--ok-soft:#e7f2ea;--warn:#93600f;--warn-soft:#fbf1df;--err:#a33a32;--err-soft:#f9e6e4;
+  --radius:10px;--shadow:0 1px 2px rgba(20,36,61,.06),0 6px 18px rgba(20,36,61,.06);
+  --serif:Georgia,"Times New Roman",Times,serif;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 var(--sans)}
+h1,h2,h3{font-family:var(--serif);font-weight:normal;color:var(--navy);margin:0 0 .4em;line-height:1.25}
+h1{font-size:30px}h2{font-size:22px}h3{font-size:17px}
+p{margin:0 0 .8em}
+a{color:var(--navy-2)}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+
+/* Top bar */
+.topbar{background:var(--navy);color:#fff;border-bottom:3px solid var(--gold)}
+.topbar-inner{max-width:1480px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;color:#fff;text-decoration:none;cursor:pointer;background:none;border:0;padding:0;font:inherit}
+.brand-name{font-family:var(--serif);font-size:24px;letter-spacing:.5px}
+.brand-tag{font-size:12px;color:#c9d3e3;display:block;margin-top:-3px}
+.top-actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.top-actions .btn{background:transparent;color:#fff;border-color:rgba(255,255,255,.35)}
+.top-actions .btn:hover{background:rgba(255,255,255,.1)}
+.top-actions .btn-gold{background:var(--gold);border-color:var(--gold)}
+.top-actions .btn-gold:hover{background:#b8935a}
+
+.notice{background:var(--gold-soft);border-bottom:1px solid #e6d6b6;color:#5c4520}
+.notice-inner{max-width:1480px;margin:0 auto;padding:9px 16px;display:flex;gap:10px;align-items:flex-start;font-size:14px}
+.notice svg{flex:none;margin-top:2px}
+.keywarn{background:var(--err-soft);color:var(--err);border-bottom:1px solid #eccac6}
+
+main{max-width:1480px;margin:0 auto;padding:24px 16px 48px}
+#view-client{max-width:1040px;margin:0 auto}
+footer{max-width:1480px;margin:0 auto;padding:0 16px 32px;color:var(--muted);font-size:13px}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;font:500 14px/1 var(--sans);padding:10px 14px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;white-space:nowrap;text-decoration:none;min-height:38px}
+.btn:hover{border-color:#c9c1b1;background:#faf8f4}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.btn-primary{background:var(--navy);border-color:var(--navy);color:#fff}
+.btn-primary:hover{background:var(--navy-2);border-color:var(--navy-2)}
+.btn-gold{background:var(--gold);border-color:var(--gold);color:#fff}
+.btn-gold:hover{background:#b8935a;border-color:#b8935a}
+.btn-ghost{background:transparent}
+.btn-sm{padding:7px 10px;font-size:13px;min-height:32px}
+.btn-ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn-ok:hover{background:#286b43}
+.btn.danger{color:var(--err)}
+.btn-lg{padding:13px 20px;font-size:15px}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+
+/* Cards / layout */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px}
+.hero{margin-bottom:22px}
+.hero p{color:var(--muted);max-width:640px;font-size:16px}
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:28px}
+.mode{display:flex;flex-direction:column;gap:10px;text-align:left;cursor:pointer;transition:border-color .15s,transform .15s}
+.mode:hover{border-color:var(--gold);transform:translateY(-1px)}
+.mode .mode-icon{width:40px;height:40px;border-radius:8px;background:var(--gold-soft);display:grid;place-items:center;color:var(--gold)}
+.mode p{color:var(--muted);margin:0;flex:1}
+.mode .btn{align-self:flex-start}
+.section-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.section-head h2{margin:0}
+.section-head .spacer{flex:1}
+
+.profile{display:flex;align-items:center;gap:12px;padding:14px 0;border-top:1px solid var(--line);flex-wrap:wrap}
+.profile:first-child{border-top:0}
+.profile-main{flex:1;min-width:220px}
+.profile-title{font-weight:600}
+.profile-meta{color:var(--muted);font-size:13px}
+.profile-actions{display:flex;gap:6px;flex-wrap:wrap}
+.empty{color:var(--muted);margin:6px 0}
+
+/* Forms */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px}
+.field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.field.full{grid-column:1/-1}
+.field>label,.label{font-weight:600;font-size:13px;color:var(--navy)}
+.hint{font-size:12.5px;color:var(--muted)}
+input[type=text],input[type=search],select,textarea{font:inherit;color:var(--ink);background:#fff;border:1px solid #d5cfc3;border-radius:8px;padding:9px 11px;width:100%;min-width:0}
+textarea{resize:vertical;min-height:90px;line-height:1.5}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(168,131,74,.18)}
+.radio-row{display:flex;gap:16px;flex-wrap:wrap;padding-top:4px}
+.radio-row label{display:flex;gap:6px;align-items:center;font-weight:normal;color:var(--ink)}
+.contact-row{display:grid;grid-template-columns:90px 1fr 1.3fr auto;gap:8px;margin-bottom:8px}
+.contact-head{display:grid;grid-template-columns:90px 1fr 1.3fr auto;gap:8px;font-size:12px;color:var(--muted);margin-bottom:4px}
+.contact-head span:last-child{width:34px}
+.icon-btn{border:1px solid var(--line);background:#fff;border-radius:8px;width:34px;cursor:pointer;color:var(--muted);font-size:18px;line-height:1}
+.icon-btn:hover{color:var(--err);border-color:#e0b9b4}
+.form-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;justify-content:flex-end}
+.docs{list-style:none;margin:6px 0 0;padding:0;font-size:13.5px}
+.docs li{display:flex;gap:8px;align-items:center;padding:4px 0}
+.dropzone{border:1.5px dashed #cfc6b4;border-radius:8px;padding:14px;background:#fcfbf8;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.dropzone.drag{border-color:var(--gold);background:var(--gold-soft)}
+
+/* Switch */
+.switch{display:inline-flex;align-items:center;gap:10px;cursor:pointer;user-select:none;font-weight:600;color:var(--navy);font-size:14px}
+.switch input{position:absolute;opacity:0;width:1px;height:1px}
+.switch .track{width:40px;height:22px;border-radius:22px;background:#cfc8bb;position:relative;transition:background .15s;flex:none}
+.switch .track::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .15s;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.switch input:checked+.track{background:var(--navy)}
+.switch input:checked+.track::after{transform:translateX(18px)}
+.switch input:focus-visible+.track{outline:2px solid var(--gold);outline-offset:2px}
+
+/* Quick mode */
+.quick-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 14px;align-items:end}
+.gen-row{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:16px}
+.gen-row .spacer{flex:1}
+.status{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:14px}
+.spin{width:16px;height:16px;border-radius:50%;border:2px solid #d8d1c3;border-top-color:var(--navy);animation:spin .8s linear infinite;display:inline-block;flex:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.banner{border-radius:var(--radius);padding:14px 16px;margin-bottom:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;border:1px solid}
+.banner.info{background:#eef2f8;border-color:#d3dcea}
+.banner.warn{background:var(--warn-soft);border-color:#ecd6ae}
+.banner .grow{flex:1;min-width:220px}
+
+/* Workspace: quick mode + pie (left) | narratives (middle, level with quick mode) | approved box (right) */
+.workspace{display:grid;gap:20px;align-items:start;
+  grid-template-columns:380px minmax(0,1fr) 340px;
+  grid-template-areas:"quick list approved" "pie list approved"}
+.workspace:not(.has-approved){grid-template-columns:380px minmax(0,1fr);grid-template-areas:"quick list" "pie list"}
+#quick-card{grid-area:quick}
+#hours-panel{grid-area:pie}
+.list-col{grid-area:list;min-width:0}
+#approved-panel{grid-area:approved}
+.list-empty{border-style:dashed;box-shadow:none;background:#fbfaf7;min-height:300px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center}
+.list-empty p{max-width:420px}
+.side-sticky{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow:auto}
+.hours-panel{padding:18px}
+.chart-head{margin-bottom:8px}
+.chart-total{font-family:var(--serif);font-size:24px;color:var(--navy);display:block}
+.sum-warn{background:var(--warn-soft);color:var(--warn);border:1px solid #ecd6ae;border-radius:8px;padding:8px 10px;font-size:13px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.sum-ok{color:var(--ok);font-size:13px;margin:0 0 8px}
+.pie-wrap{position:relative;display:flex;justify-content:center;margin:6px 0 12px}
+.pie-wrap svg{width:200px;height:200px;max-width:100%}
+.pie-wrap path,.pie-wrap circle{transition:opacity .15s;cursor:default}
+.pie-wrap.hovering .slice:not(.on){opacity:.3}
+.pie-tip{position:absolute;pointer-events:none;background:var(--navy);color:#fff;font-size:12.5px;line-height:1.35;padding:6px 9px;border-radius:6px;max-width:220px;transform:translate(-50%,calc(-100% - 10px));white-space:normal;z-index:5;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+.legend{list-style:none;margin:0;padding:0;font-size:12.5px}
+.legend li{display:grid;grid-template-columns:12px 26px minmax(0,1fr) auto;gap:6px;align-items:center;padding:4px 4px;border-radius:5px}
+.legend li.on{background:#f3efe6}
+.legend .sw{width:12px;height:12px;border-radius:3px}
+.legend .lnum{color:var(--muted);font-weight:600}
+.legend .ltxt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.legend .lval{font-variant-numeric:tabular-nums;font-weight:600;color:var(--ink);text-align:right}
+.legend .lpct{color:var(--muted);font-weight:normal;margin-left:4px}
+
+.approved-box{padding:18px;border-top:3px solid var(--ok)}
+.approved-box .ab-head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.approved-box h3{margin:0;flex:1}
+.ab-list{list-style:none;margin:10px 0 0;padding:0}
+.ab-list li{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;padding:9px 0;border-top:1px solid var(--line);font-family:var(--serif);font-size:15px;align-items:start;animation:fadein .25s ease}
+.ab-list li:first-child{border-top:0}
+.ab-list .ab-h{font-family:var(--sans);font-weight:700;font-size:13px;color:var(--navy);font-variant-numeric:tabular-nums;padding-top:2px;white-space:nowrap}
+.ab-list .ab-x{border:0;background:none;color:var(--muted);cursor:pointer;font-size:16px;line-height:1;padding:2px 4px}
+.ab-list .ab-x:hover{color:var(--err)}
+.ab-empty{color:var(--muted);font-size:13.5px;margin:8px 0 0}
+@keyframes fadein{from{background:var(--ok-soft)}to{background:transparent}}
+.group-label{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:22px 0 10px;display:flex;align-items:center;gap:10px}
+.group-label::after{content:"";flex:1;height:1px;background:var(--line)}
+
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.toolbar .spacer{flex:1}
+.entry{background:#fff;border:1px solid var(--line);border-left:4px solid #d5cfc3;border-radius:var(--radius);padding:14px 16px;margin-bottom:12px;box-shadow:var(--shadow)}
+.entry.approved{background:#f3f1ed;border-color:#e4e0d8;border-left-color:#b9b2a5;box-shadow:none}
+.entry.approved .narrative{color:#857f74}
+.entry.approved .entry-note,.entry.approved .flags{opacity:.6}
+.entry.approved .entry-num{background:#e6e2da;color:#857f74}
+.entry-dot{width:10px;height:10px;border-radius:50%;flex:none;margin-top:8px}
+.no-hours .entry-dot{display:none}
+.entry-head{display:flex;gap:10px;align-items:flex-start}
+.entry-num{flex:none;width:24px;height:24px;border-radius:50%;background:var(--gold-soft);color:var(--gold);font-weight:700;font-size:12px;display:grid;place-items:center;margin-top:1px}
+.entry-note{flex:1;color:var(--muted);font-size:13px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;word-break:break-word;padding-top:3px}
+.hours{display:flex;align-items:center;gap:4px;flex:none;font-size:13px;color:var(--muted)}
+.hours input{width:64px;text-align:right;padding:6px 8px;font-variant-numeric:tabular-nums;font-weight:600}
+.no-hours .hours,.no-hours .hours-panel{display:none!important}
+.narrative{font-family:var(--serif);font-size:16.5px;margin:10px 0 8px 34px;color:var(--ink)}
+.entry textarea{margin:10px 0 8px 34px;width:calc(100% - 34px);font-family:var(--serif);font-size:16px;min-height:70px}
+.flags{display:flex;flex-direction:column;gap:5px;margin:0 0 10px 34px}
+.flag{font-size:13px;border-radius:6px;padding:5px 9px;display:flex;gap:7px;align-items:flex-start;background:var(--warn-soft);color:#6e4a0c}
+.flag b{font-weight:700;white-space:nowrap}
+.flag.error{background:var(--err-soft);color:var(--err)}
+.entry-actions{display:flex;gap:6px;flex-wrap:wrap;margin-left:34px;align-items:center}
+.approved-tag{color:var(--ok);font-weight:600;font-size:13px;margin-left:4px}
+
+/* Dialog */
+dialog{border:0;border-radius:12px;padding:0;max-width:720px;width:calc(100% - 32px);box-shadow:0 20px 60px rgba(0,0,0,.25);color:var(--ink)}
+dialog::backdrop{background:rgba(20,36,61,.45)}
+.dlg-body{padding:22px}
+.dlg-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;padding:14px 22px;border-top:1px solid var(--line);background:#faf8f4}
+#sg-text{min-height:360px;font-size:14px}
+
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:11px 16px;border-radius:8px;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.2);z-index:100;max-width:calc(100% - 32px);opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.show{opacity:1}
+.toast.error{background:var(--err)}
+.toast.ok{background:var(--ok)}
+.toast.warn{background:var(--warn)}
+
+/* Medium screens: the approved box moves under the pie, in the left column */
+@media (max-width:1279px){
+  .workspace,.workspace:not(.has-approved){grid-template-columns:340px minmax(0,1fr);grid-template-areas:"quick list" "pie list" "approved list"}
+  .side-sticky{position:static;max-height:none}
+}
+@media (max-width:860px){
+  .workspace,.workspace:not(.has-approved){grid-template-columns:minmax(0,1fr);grid-template-areas:"quick" "list" "pie" "approved"}
+  .list-empty{min-height:0}
+}
+@media (max-width:760px){
+  h1{font-size:25px}
+  .mode-grid,.form-grid{grid-template-columns:1fr}
+  .contact-row,.contact-head{grid-template-columns:70px 1fr auto}
+  .contact-row input:nth-child(3){grid-column:1/3}
+  .contact-head span:nth-child(3){display:none}
+  .brand-tag{display:none}
+  .narrative,.flags,.entry-actions{margin-left:0}
+  .entry textarea{margin-left:0;width:100%}
+}
+@media (max-width:420px){.quick-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <button class="brand" id="brand" aria-label="Billzilla home">
+      <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><rect x="1" y="1" width="32" height="32" rx="7" fill="#a8834a"/><path d="M11 8h7.5c3.6 0 5.8 1.8 5.8 4.6 0 1.9-1 3.2-2.6 3.8 2.1.5 3.4 2 3.4 4.2 0 3.2-2.4 5.4-6.3 5.4H11V8zm4 3.3v4h3.1c1.5 0 2.3-.7 2.3-2s-.8-2-2.3-2H15zm0 7.1v4.3h3.5c1.6 0 2.5-.8 2.5-2.1 0-1.4-.9-2.2-2.5-2.2H15z" fill="#14243d"/></svg>
+      <span><span class="brand-name">Billzilla</span><span class="brand-tag">Time-entry narratives, in one house style</span></span>
+    </button>
+    <nav class="top-actions">
+      <button class="btn btn-sm" id="nav-home">Home</button>
+      <button class="btn btn-sm" id="nav-style">Style guide</button>
+      <button class="btn btn-sm btn-gold" id="nav-example">Load example</button>
+    </nav>
+  </div>
+</header>
+
+<div class="notice" role="note">
+  <div class="notice-inner">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a8834a" stroke-width="2" aria-hidden="true"><path d="M12 3 2 20h20L12 3z"/><path d="M12 10v4M12 17.5v.01"/></svg>
+    <span><strong>Do not upload confidential client documents: free AI models may store the data they receive.</strong></span>
+  </div>
+</div>
+<div class="notice keywarn" id="keywarn" hidden><div class="notice-inner">No OpenRouter API key is embedded in this copy of Billzilla, so AI features will not work.</div></div>
+
+<main>
+  <!-- HOME -->
+  <section class="view" id="view-home">
+    <div class="hero">
+      <h1>Professional time narratives, in one consistent voice.</h1>
+      <p>Paste quick notes like “reviewed SPA + call w/ SR re indemnities”, enter the total time, and get polished entries in English or Spanish. Billzilla drafts narratives only; it is not a billing system.</p>
+    </div>
+    <!-- Workspace: quick mode + pie (left) | suggested narratives (middle) | approved box (right) -->
+    <div class="workspace" id="workspace">
+    <div class="card" id="quick-card">
+      <div class="section-head"><h2>Quick mode</h2><span class="spacer"></span><button class="btn btn-sm btn-gold" id="q-example">Load example</button></div>
+      <div class="quick-grid">
+        <div class="field full" style="grid-column:1/-1"><label for="q-client">Client profile</label>
+          <select id="q-client"></select></div>
+        <div class="field"><label for="q-lang">Language of narratives</label>
+          <select id="q-lang"><option value="en">English</option><option value="es">Español</option></select></div>
+        <div class="field"><label for="q-total">Total time worked (h)</label>
+          <input type="text" id="q-total" inputmode="decimal" placeholder="e.g. 4.5"></div>
+        <div class="field full notes" style="grid-column:1/-1"><label for="q-notes">Your notes: one task per line</label>
+          <textarea id="q-notes" rows="9" placeholder="reviewed SPA + call w/ SR re indemnities&#10;comments on disclosure schedules&#10;mtg with Beta team re employment DD"></textarea></div>
+      </div>
+      <div class="gen-row">
+        <label class="switch"><input type="checkbox" id="q-dist" checked><span class="track"></span>Suggest time distribution</label>
+        <span class="spacer"></span>
+        <span class="status" id="q-status" hidden><span class="spin"></span><span id="q-status-text">Drafting…</span></span>
+        <button class="btn btn-ghost btn-sm" id="q-cancel" hidden>Cancel</button>
+        <button class="btn btn-primary btn-lg" id="q-generate">Generate narratives</button>
+      </div>
+      <div id="q-error"></div>
+    </div>
+
+    <aside class="card hours-panel side-sticky" id="hours-panel" aria-label="Hours per task" hidden>
+      <div class="chart-head"><span class="chart-total" id="chart-total"></span><span class="muted small" id="chart-sub"></span></div>
+      <div id="sum-warn"></div>
+      <div class="pie-wrap" id="pie"></div>
+      <ul class="legend" id="legend"></ul>
+    </aside>
+
+    <section class="list-col" id="list-col" aria-label="Suggested narratives">
+      <div class="card list-empty" id="list-empty">
+        <h2>Suggested narratives</h2>
+        <p class="muted">Your drafted narratives will appear here, next to your notes. Approve the ones you like and they will be collected in a box ready to copy.</p>
+      </div>
+      <div id="results" hidden>
+        <div id="guess"></div>
+        <div class="toolbar">
+          <h2 style="margin:0">Suggested narratives</h2>
+          <span class="spacer"></span>
+          <span class="muted small" id="approved-count"></span>
+          <button class="btn btn-sm" id="translate-en" title="Translate all narratives from Spanish into English">Translate ES → EN</button>
+          <button class="btn btn-sm" id="approve-all">Approve all</button>
+        </div>
+        <div id="entries"></div>
+      </div>
+    </section>
+
+    <aside class="card approved-box side-sticky" id="approved-panel" aria-label="Approved narratives" hidden>
+      <div class="ab-head"><h3>Approved narratives</h3><button class="btn btn-sm btn-primary" id="copy-all">Copy</button></div>
+      <div class="muted small" id="ab-sub"></div>
+      <ul class="ab-list" id="ab-list"></ul>
+    </aside>
+    </div>
+
+    <div class="card" id="clients-card" style="margin-top:28px">
+      <div class="section-head">
+        <h2>Client setup</h2>
+        <span class="spacer"></span>
+        <label class="btn btn-sm btn-ghost" for="import-file">Import shared profile</label>
+        <input type="file" id="import-file" accept=".json,application/json" hidden>
+        <button class="btn btn-sm btn-primary" id="new-client">+ New client profile</button>
+      </div>
+      <p class="muted small">Optional. A profile adds the matter, contacts (initials → full names) and a summary of key documents, for more accurate narratives. Profiles are saved only in this browser.</p>
+      <div id="profile-list"></div>
+    </div>
+  </section>
+
+  <!-- CLIENT SETUP -->
+  <section class="view" id="view-client" hidden>
+    <div class="section-head"><h1 id="cf-heading" style="margin:0">New client profile</h1></div>
+    <p class="muted">No field is required. The more context you add, the better the narratives.</p>
+    <form class="card" id="client-form" autocomplete="off">
+      <div class="form-grid">
+        <div class="field"><label for="cf-client">Client name</label><input type="text" id="cf-client" placeholder="e.g. Acme Holdings"></div>
+        <div class="field"><label for="cf-matter">Matter name</label><input type="text" id="cf-matter" placeholder="e.g. Acquisition of Beta SpA"></div>
+        <div class="field"><label for="cf-type">Type of work</label>
+          <select id="cf-type"><option value="">Not specified</option></select></div>
+        <div class="field"><span class="label">Language of narratives</span>
+          <div class="radio-row"><label><input type="radio" name="cf-lang" value="en" checked> English</label><label><input type="radio" name="cf-lang" value="es"> Español</label></div></div>
+        <div class="field full"><label for="cf-desc">Short description of the matter</label>
+          <textarea id="cf-desc" rows="3" placeholder="e.g. Representation of the buyer in the acquisition of 100% of the shares of Beta SpA."></textarea></div>
+
+        <div class="field full">
+          <span class="label">Frequent contacts</span>
+          <span class="hint">Billzilla expands initials only from this list. Use unique initials (e.g. SR and SR2) when two people share them.</span>
+          <div class="contact-head" aria-hidden="true"><span>Initials</span><span>Full name</span><span>Role</span><span></span></div>
+          <div id="cf-contacts"></div>
+          <div><button type="button" class="btn btn-sm" id="cf-add-contact">+ Add contact</button></div>
+        </div>
+
+        <div class="field full">
+          <span class="label">Matter documents (PDF, DOCX, TXT)</span>
+          <span class="hint">Text is extracted in your browser; only an AI summary is kept and used as context, never the full file. Do not upload confidential client documents.</span>
+          <div class="dropzone" id="dropzone">
+            <label class="btn btn-sm" for="cf-files">Choose files</label>
+            <input type="file" id="cf-files" multiple accept=".pdf,.docx,.txt,application/pdf,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden>
+            <span class="hint">…or drop them here, e.g. an offer letter or a transaction binder.</span>
+          </div>
+          <ul class="docs" id="cf-docs"></ul>
+        </div>
+        <div class="field full"><label for="cf-summary">Document context summary</label>
+          <textarea id="cf-summary" rows="6" placeholder="Filled in automatically when you upload documents. You can edit it."></textarea></div>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-ghost" id="cf-cancel">Cancel</button>
+        <button type="submit" class="btn">Save profile</button>
+        <button type="button" class="btn btn-primary" id="cf-save-draft">Save &amp; start drafting</button>
+      </div>
+    </form>
+  </section>
+
+</main>
+
+<footer>Billzilla drafts narratives only. It is not a billing system: review every entry before use. AI by OpenRouter (model <code>openrouter/free</code>).</footer>
+
+<!-- Style guide dialog -->
+<dialog id="dlg-style">
+  <form method="dialog">
+    <div class="dlg-body">
+      <h2>House style guide</h2>
+      <p class="muted small">Billzilla gives this guide to the AI with every request. It is included whenever you share a client profile, so the whole team drafts in the same style.</p>
+      <textarea id="sg-text" spellcheck="false"></textarea>
+    </div>
+    <div class="dlg-actions">
+      <button type="button" class="btn btn-ghost" id="sg-reset">Reset to default</button>
+      <span style="flex:1"></span>
+      <button value="cancel" class="btn">Cancel</button>
+      <button type="button" class="btn btn-primary" id="sg-save">Save style guide</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Share dialog -->
+<dialog id="dlg-share">
+  <form method="dialog">
+    <div class="dlg-body">
+      <h2>Share client profile</h2>
+      <p id="share-title" style="font-weight:600"></p>
+      <p class="muted small">The shared profile includes the client details, contacts, the document summary (not the documents themselves) and your current house style guide. Anyone who opens the link can import it into their own browser.</p>
+    </div>
+    <div class="dlg-actions">
+      <button value="cancel" class="btn btn-ghost">Close</button>
+      <button type="button" class="btn" id="share-download">Download .json</button>
+      <button type="button" class="btn btn-primary" id="share-link">Copy share link</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Import dialog -->
+<dialog id="dlg-import">
+  <form method="dialog">
+    <div class="dlg-body">
+      <h2>Import shared profile</h2>
+      <p id="imp-summary"></p>
+      <label id="imp-style-row" style="display:flex;gap:8px;align-items:flex-start"><input type="checkbox" id="imp-style" checked style="margin-top:4px"> <span>Also adopt the house style guide included in this profile (replaces your current one).</span></label>
+    </div>
+    <div class="dlg-actions">
+      <button value="cancel" class="btn btn-ghost">Cancel</button>
+      <button type="button" class="btn btn-primary" id="imp-go">Import</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+'use strict';
+/* ===== Configuration ===== */
+const OPENROUTER_API_KEY = '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';
+const MODEL = 'openrouter/free';
+const API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+const LIBS = {
+  pdf: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',
+  pdfWorker: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js',
+  mammoth: 'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js'
+};
+const LS = { profiles: 'billzilla.profiles.v1', style: 'billzilla.styleGuide.v1' };
+const WORK_TYPES = [['advice','Day-to-day advice'],['transaction','Transaction'],['litigation','Litigation'],['project','Project'],['financing','Financing'],['other','Other']];
+const FLAG_LABELS = { vague:'Vague', multiple_tasks:'Several tasks', initials:'Initials', style:'Style', error:'Missing' };
+
+const DEFAULT_STYLE = `BILLZILLA HOUSE STYLE FOR TIME-ENTRY NARRATIVES
+
+1. Impersonal voice. Every narrative starts with a noun that names the task, never with a verb in first or third person (not "Revisé", "Revisa", "Reviewed", "Reviews").
+   Spanish openers: "Redacción de…", "Revisión de…", "Llamada con…", "Reunión con…", "Coordinación de…", "Análisis de…", "Preparación de…", "Negociación de…", "Comentarios a…", "Correspondencia con…".
+   English openers: "Drafting of…", "Review of…", "Call with…", "Meeting with…", "Coordination of…", "Analysis of…", "Preparation of…", "Negotiation of…", "Comments on…", "Correspondence with…".
+
+2. One task per narrative.
+
+3. No abbreviations or internal shorthand. Write documents and terms in full (e.g. "contrato de compraventa de acciones" / "share purchase agreement", not "SPA"; "condiciones precedentes" / "conditions precedent", not "CPs"). Widely used terms such as "due diligence" may be kept.
+
+4. People: full name, with role if known, on first mention (e.g. "Sara Rojas, CFO de Acme Holdings"). Expand initials only from the client's contacts list; never guess.
+
+5. Be specific when possible (document, topic, counterpart, purpose); stay general when needed (for instance, to protect privileged strategy, or when the note gives no detail). Never invent facts that are not in the notes or the client context.
+
+6. One sentence, ending with a period. Concise: usually 8 to 30 words.
+
+7. Professional, neutral tone. No internal comments, no emojis, no hours or amounts in the text.`;
+
+const EXAMPLE_PROFILE = {
+  id: 'example-acme-beta',
+  clientName: 'Acme Holdings',
+  matterName: 'Acquisition of Beta SpA',
+  workType: 'transaction',
+  description: 'Fictional example. Representation of Acme Holdings, as buyer, in the acquisition of 100% of the shares of Beta SpA, a Chilean logistics company, from its founders.',
+  docSummary: '[Term sheet (fictional)]\nAcme Holdings (buyer) will acquire 100% of the shares of Beta SpA from its founders (sellers) under a share purchase agreement (SPA). Price adjustment based on closing accounts. Seller indemnities capped at 20% of the price, with a 24-month survival period. Conditions precedent (CPs) include antitrust clearance and retention of key employees. Labor and tax due diligence (DD) in progress. Signing planned before a notary public in Santiago. Disclosure schedules to be delivered by Beta\'s counsel.',
+  docNames: [],
+  contacts: [
+    { initials: 'SR', name: 'Sara Rojas', role: 'CFO of Acme Holdings' },
+    { initials: 'SR2', name: 'Sergio Rivas', role: 'General Counsel of Beta SpA' }
+  ],
+  language: 'en'
+};
+const EXAMPLE_NOTES = `reviewed SPA + call w/ SR re indemnities
+comments on disclosure schedules sent by Beta's counsel
+mtg with SR2 and Beta legal team re employment DD
+email to JP re outstanding CPs
+coord. signing with notary
+misc`;
+
+const KNOWN_ABBR = new Set(('SPA SHA APA NDA LOI MOU TS DD VDR CP KYC AML IPO LLC SA LTDA CEO CFO COO CLO CTO GC IP RRHH SII CMF IVA USD CLP UF EUR PDF DOCX TXT AI OK QA ESG EBITDA RUT ID SPV JV TSA SLA HR VAT NY UK US EU M&A').split(' '));
+const GENERIC_RE = /^(varios|varias|misc\.?|miscellaneous|various|general|otros|varios asuntos|asuntos varios|temas varios|admin|administrativo|seguimiento|follow[- ]?up|trabajo|work|emails?|mails?|correos)$/i;
+
+/* ===== Helpers ===== */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+function el(tag, attrs, ...children) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v == null || v === false) continue;
+    if (k === 'class') n.className = v;
+    else if (k.startsWith('on')) n.addEventListener(k.slice(2), v);
+    else if (k === 'value') n.value = v;
+    else n.setAttribute(k, v === true ? '' : v);
+  }
+  for (const c of children.flat()) if (c != null && c !== false) n.append(c instanceof Node ? c : document.createTextNode(String(c)));
+  return n;
+}
+const uid = () => Math.random().toString(36).slice(2, 9) + Date.now().toString(36);
+const fmtH = t => (t / 10).toFixed(1);
+const parseHours = s => { const v = parseFloat(String(s ?? '').replace(',', '.')); return isFinite(v) ? v : NaN; };
+const workTypeLabel = v => (WORK_TYPES.find(w => w[0] === v) || [, ''])[1];
+const store = {
+  get(k, fb) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fb; } catch { return fb; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch { toast('Could not save: browser storage is unavailable or full.', 'error'); return false; } }
+};
+let toastTimer;
+function toast(msg, type = '') {
+  const t = $('#toast'); t.textContent = msg; t.className = 'toast show ' + type;
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.className = 'toast', type === 'error' ? 6000 : 3200);
+}
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); return true; }
+  catch {
+    const ta = el('textarea', { style: 'position:fixed;opacity:0' }); ta.value = text; document.body.append(ta); ta.select();
+    let ok = false; try { ok = document.execCommand('copy'); } catch {} ta.remove(); return ok;
+  }
+}
+const scriptCache = {};
+function loadScript(src) {
+  return scriptCache[src] ||= new Promise((res, rej) => {
+    const s = el('script', { src }); s.onload = res; s.onerror = () => { delete scriptCache[src]; rej(new Error('Could not load a library from the CDN. Check your connection.')); };
+    document.head.append(s);
+  });
+}
+function nameInitials(name) {
+  return String(name || '').split(/\s+/).filter(w => /^[A-ZÁÉÍÓÚÑ]/.test(w)).map(w => w[0]).join('').toUpperCase();
+}
+
+/* ===== State ===== */
+let profiles = store.get(LS.profiles, []);
+let styleGuide = store.get(LS.style, null) || DEFAULT_STYLE;
+const state = { entries: [], distribute: true, total: 0, language: 'en', profileId: '', clientGuess: undefined };
+const getProfile = id => profiles.find(p => p.id === id) || null;
+const saveProfiles = () => store.set(LS.profiles, profiles);
+
+/* ===== Views ===== */
+function show(view) {
+  $$('.view').forEach(v => v.hidden = v.id !== 'view-' + view);
+  if (view === 'home') { renderHome(); refreshClientSelect(); }
+  window.scrollTo(0, 0);
+}
+
+function renderHome() {
+  const list = $('#profile-list');
+  if (!profiles.length) {
+    list.replaceChildren(el('p', { class: 'empty' }, 'No client profiles yet. Create one with “Client setup”, import a shared profile, or click “Load example”.'));
+    return;
+  }
+  list.replaceChildren(...profiles.map(p => el('div', { class: 'profile' },
+    el('div', { class: 'profile-main' },
+      el('div', { class: 'profile-title' }, p.clientName || 'Unnamed client', p.matterName ? el('span', { class: 'muted' }, ' — ' + p.matterName) : null),
+      el('div', { class: 'profile-meta' }, [workTypeLabel(p.workType), p.language === 'es' ? 'Español' : 'English',
+        `${(p.contacts || []).length} contact${(p.contacts || []).length === 1 ? '' : 's'}`,
+        p.docSummary ? 'document summary' : null].filter(Boolean).join(' · '))),
+    el('div', { class: 'profile-actions' },
+      el('button', { class: 'btn btn-primary btn-sm', onclick: () => startQuick(p.id) }, 'Draft'),
+      el('button', { class: 'btn btn-sm', onclick: () => openClientForm(p) }, 'Edit'),
+      el('button', { class: 'btn btn-sm', onclick: () => openShare(p) }, 'Share'),
+      el('button', { class: 'btn btn-sm btn-ghost danger', onclick: () => deleteProfile(p) }, 'Delete'))
+  )));
+}
+function deleteProfile(p) {
+  if (!confirm(`Delete the profile “${p.clientName || 'Unnamed client'}${p.matterName ? ' — ' + p.matterName : ''}” from this browser?`)) return;
+  profiles = profiles.filter(x => x.id !== p.id); saveProfiles(); renderHome(); toast('Profile deleted.');
+}
+
+/* ===== Client setup ===== */
+let formProfileId = null;
+let formDocs = [];  // {name, status: 'done'|'extracting'|'summarizing'|'error', msg}
+
+function openClientForm(p) {
+  formProfileId = p?.id || null;
+  $('#cf-heading').textContent = p ? 'Edit client profile' : 'New client profile';
+  $('#cf-client').value = p?.clientName || '';
+  $('#cf-matter').value = p?.matterName || '';
+  $('#cf-type').value = p?.workType || '';
+  $('#cf-desc').value = p?.description || '';
+  $('#cf-summary').value = p?.docSummary || '';
+  $$('input[name=cf-lang]').forEach(r => r.checked = r.value === (p?.language || 'en'));
+  $('#cf-contacts').replaceChildren();
+  const cs = p?.contacts?.length ? p.contacts : [{}];
+  cs.forEach(addContactRow);
+  formDocs = (p?.docNames || []).map(name => ({ name, status: 'done' }));
+  renderDocs();
+  $('#cf-files').value = '';
+  show('client');
+}
+function addContactRow(c = {}) {
+  const row = el('div', { class: 'contact-row' },
+    el('input', { type: 'text', 'aria-label': 'Initials', placeholder: 'SR', value: c.initials || '', maxlength: 8 }),
+    el('input', { type: 'text', 'aria-label': 'Full name', placeholder: 'Sara Rojas', value: c.name || '' }),
+    el('input', { type: 'text', 'aria-label': 'Role', placeholder: 'CFO of the client', value: c.role || '' }),
+    el('button', { type: 'button', class: 'icon-btn', title: 'Remove contact', 'aria-label': 'Remove contact', onclick: () => row.remove() }, '×'));
+  $('#cf-contacts').append(row);
+}
+function renderDocs() {
+  const icon = { done: '✓', extracting: null, summarizing: null, error: '!' };
+  const label = { done: 'summarized', extracting: 'extracting text…', summarizing: 'summarizing with AI…', error: '' };
+  $('#cf-docs').replaceChildren(...formDocs.map(d => el('li', {},
+    icon[d.status] ? el('span', { style: `color:var(${d.status === 'error' ? '--err' : '--ok'});font-weight:700` }, icon[d.status]) : el('span', { class: 'spin' }),
+    el('span', {}, d.name), el('span', { class: 'muted' }, d.status === 'error' ? d.msg : label[d.status]))));
+}
+function readClientForm() {
+  const contacts = $$('#cf-contacts .contact-row').map(r => {
+    const [i, n, ro] = $$('input', r).map(x => x.value.trim());
+    return { initials: i.toUpperCase(), name: n, role: ro };
+  }).filter(c => c.initials || c.name || c.role);
+  return {
+    id: formProfileId || uid(),
+    clientName: $('#cf-client').value.trim(),
+    matterName: $('#cf-matter').value.trim(),
+    workType: $('#cf-type').value,
+    description: $('#cf-desc').value.trim(),
+    docSummary: $('#cf-summary').value.trim(),
+    docNames: formDocs.filter(d => d.status === 'done').map(d => d.name),
+    contacts,
+    language: ($('input[name=cf-lang]:checked') || {}).value || 'en'
+  };
+}
+function saveClient(goDraft) {
+  if (formDocs.some(d => d.status === 'extracting' || d.status === 'summarizing')) { toast('Wait until the documents finish processing.', 'warn'); return; }
+  const p = readClientForm();
+  const dupes = p.contacts.map(c => c.initials).filter((x, i, a) => x && a.indexOf(x) !== i);
+  if (dupes.length) toast(`Note: initials ${[...new Set(dupes)].join(', ')} appear more than once. Billzilla will flag them as ambiguous.`, 'warn');
+  const i = profiles.findIndex(x => x.id === p.id);
+  if (i >= 0) profiles[i] = p; else profiles.unshift(p);
+  if (!saveProfiles()) return;
+  formProfileId = p.id;
+  if (!dupes.length) toast('Profile saved.', 'ok');
+  if (goDraft) startQuick(p.id); else show('home');
+}
+
+async function extractText(file) {
+  const name = file.name.toLowerCase();
+  if (name.endsWith('.txt') || file.type === 'text/plain') return await file.text();
+  const buf = await file.arrayBuffer();
+  if (name.endsWith('.pdf')) {
+    await loadScript(LIBS.pdf);
+    pdfjsLib.GlobalWorkerOptions.workerSrc = LIBS.pdfWorker;
+    const doc = await pdfjsLib.getDocument({ data: buf }).promise;
+    const out = []; const max = Math.min(doc.numPages, 80);
+    for (let i = 1; i <= max; i++) {
+      const page = await doc.getPage(i);
+      const tc = await page.getTextContent();
+      out.push(tc.items.map(it => it.str).join(' '));
+      if (out.join('\n').length > 60000) break;
+    }
+    return out.join('\n');
+  }
+  if (name.endsWith('.docx')) {
+    await loadScript(LIBS.mammoth);
+    const r = await mammoth.extractRawText({ arrayBuffer: buf });
+    return r.value;
+  }
+  throw new Error('Unsupported file type (use PDF, DOCX or TXT).');
+}
+async function summarizeDoc(name, text, lang) {
+  const clipped = text.length > 40000 ? text.slice(0, 40000) + '\n[…document truncated…]' : text;
+  const msg = [
+    { role: 'system', content: 'You summarize legal documents into short background notes that help lawyers draft time-entry narratives. Be factual and concise. Plain text only.' },
+    { role: 'user', content: `Summarize the document "${name}" in at most 170 words, in ${lang === 'es' ? 'Spanish' : 'English'}. Cover: the parties and their roles, the transaction or matter, key documents and defined terms with their abbreviations spelled out, people named with their roles, and key steps or milestones. Do not include amounts or sensitive figures.\n\nDOCUMENT TEXT:\n${clipped}` }
+  ];
+  return (await callAI(msg, { temperature: 0.2, maxTokens: 3000 })).trim();
+}
+async function handleFiles(fileList) {
+  const files = [...fileList];
+  if (!files.length) return;
+  const lang = ($('input[name=cf-lang]:checked') || {}).value || 'en';
+  for (const f of files) {
+    const d = { name: f.name, status: 'extracting' }; formDocs.push(d); renderDocs();
+    try {
+      const text = (await extractText(f)).replace(/\s+\n/g, '\n').trim();
+      if (text.length < 30) throw new Error('No readable text found (scanned PDF?).');
+      d.status = 'summarizing'; renderDocs();
+      const summary = await summarizeDoc(f.name, text, lang);
+      const ta = $('#cf-summary');
+      ta.value = (ta.value.trim() ? ta.value.trim() + '\n\n' : '') + `[${f.name}]\n${summary}`;
+      d.status = 'done';
+    } catch (e) { d.status = 'error'; d.msg = e.message; }
+    renderDocs();
+  }
+  $('#cf-files').value = '';
+}
+
+/* ===== AI ===== */
+function hasKey() { return OPENROUTER_API_KEY && !OPENROUTER_API_KEY.startsWith('__'); }
+// The run that the Cancel button aborts (one at a time).
+let currentRun = null;
+class CancelledError extends Error { constructor() { super('Cancelled.'); this.name = 'CancelledError'; } }
+
+// One HTTP request to OpenRouter. Throws an Error with .retry = true when another attempt may succeed.
+async function requestAI(messages, { temperature, maxTokens, signal }) {
+  if (!hasKey()) throw new Error('No OpenRouter API key is configured in this copy of Billzilla.');
+  const headers = { 'Authorization': 'Bearer ' + OPENROUTER_API_KEY, 'Content-Type': 'application/json', 'X-Title': 'Billzilla' };
+  if (/^https?:/.test(location.protocol)) headers['HTTP-Referer'] = location.origin;
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort('timeout'), 45000);
+  const onCancel = () => ctl.abort('cancel');
+  signal?.addEventListener('abort', onCancel);
+  const fail = (msg, retry) => Object.assign(new Error(msg), { retry });
+  // OpenRouter sends headers immediately and the body only when the model finishes,
+  // so the timeout and Cancel must also cover reading the body.
+  let res, data = null;
+  try {
+    res = await fetch(API_URL, { method: 'POST', headers, signal: ctl.signal,
+      body: JSON.stringify({ model: MODEL, messages, temperature, max_tokens: maxTokens, reasoning: { max_tokens: 1000, exclude: true } }) });
+    const raw = await res.text();
+    try { data = JSON.parse(raw); } catch {}
+  } catch (e) {
+    if (signal?.aborted) throw new CancelledError();
+    throw fail(ctl.signal.reason === 'timeout' ? 'The free AI model took too long to answer.' : 'Network error: could not reach OpenRouter. Check your internet connection.', true);
+  } finally { clearTimeout(timer); signal?.removeEventListener('abort', onCancel); }
+  if (!res.ok || data?.error) {
+    const code = data?.error?.code || res.status;
+    const m = data?.error?.message || res.statusText || 'unknown error';
+    if (code === 401) throw fail('The API key was rejected by OpenRouter (it may have been revoked).', false);
+    if (code === 402) throw fail('OpenRouter reports insufficient credits for this key.', false);
+    if (code === 429) throw fail('The free AI models are rate-limited right now. Wait a minute and try again.', true);
+    throw fail(`OpenRouter error ${code}: ${m}`, code >= 500 || code === 408 || code === 400);
+  }
+  let content = data?.choices?.[0]?.message?.content;
+  if (Array.isArray(content)) content = content.map(c => c.text || '').join('');
+  content = String(content || '').replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+  if (!content) throw fail(`The free model (${data?.model || 'unknown'}) returned an empty answer.`, true);
+  return content;
+}
+
+// openrouter/free sends each request to a random free model, and some are slow or unsuitable.
+// So each round sends two requests in parallel and keeps the first usable answer; failed rounds are retried.
+async function callAI(messages, { temperature = 0.3, maxTokens = 6000, signal, onAttempt, parse } = {}) {
+  const ROUNDS = 3, PARALLEL = 2;
+  let lastErr;
+  for (let round = 1; round <= ROUNDS; round++) {
+    if (signal?.aborted) throw new CancelledError();
+    onAttempt?.(round, ROUNDS, lastErr);
+    if (round > 1) await new Promise(r => setTimeout(r, lastErr?.message.includes('rate-limited') ? 4000 : 500));
+    const roundCtl = new AbortController();
+    const onCancel = () => roundCtl.abort();
+    signal?.addEventListener('abort', onCancel);
+    const one = async () => {
+      const content = await requestAI(messages, { temperature, maxTokens, signal: roundCtl.signal });
+      return parse ? parse(content) : content;
+    };
+    try {
+      const result = await Promise.any(Array.from({ length: PARALLEL }, one));
+      roundCtl.abort(); // stop the slower request
+      return result;
+    } catch (agg) {
+      if (signal?.aborted) throw new CancelledError();
+      const errs = (agg.errors || [agg]).filter(e => !(e instanceof CancelledError));
+      const fatal = errs.find(e => e.retry === false);
+      if (fatal) throw fatal;
+      lastErr = errs[0] || agg;
+    } finally { signal?.removeEventListener('abort', onCancel); }
+  }
+  throw new Error(`${lastErr.message} (tried ${ROUNDS * PARALLEL} free models)`);
+}
+function parseJSON(text) {
+  let t = text.replace(/```(?:json)?/gi, '').trim();
+  const a = t.indexOf('{'), b = t.lastIndexOf('}');
+  if (a < 0 || b < a) throw new Error('no JSON');
+  t = t.slice(a, b + 1);
+  try { return JSON.parse(t); } catch { return JSON.parse(t.replace(/,\s*([}\]])/g, '$1')); }
+}
+function callAIJSON(messages, validate, opts = {}) {
+  return callAI(messages, { ...opts, parse: content => {
+    let d;
+    try { d = parseJSON(content); } catch { throw Object.assign(new Error('The AI answer was not in the expected format.'), { retry: true }); }
+    if (!validate(d)) throw Object.assign(new Error('The AI answer was incomplete.'), { retry: true });
+    return d;
+  } });
+}
+
+function profileContext(p) {
+  if (!p) return 'No client profile selected. There is no contacts list, so all initials are unknown.';
+  const L = [];
+  if (p.clientName) L.push('Client: ' + p.clientName);
+  if (p.matterName) L.push('Matter: ' + p.matterName);
+  if (p.workType) L.push('Type of work: ' + workTypeLabel(p.workType));
+  if (p.description) L.push('Matter description: ' + p.description);
+  if (p.docSummary) L.push('Background from matter documents (summary):\n' + p.docSummary.slice(0, 6000));
+  const cs = (p.contacts || []).filter(c => c.initials || c.name);
+  L.push(cs.length ? 'Frequent contacts (initials = full name, role):\n' + cs.map(c => `- ${c.initials || '(no initials)'} = ${c.name || '(no name)'}${c.role ? ', ' + c.role : ''}`).join('\n') : 'Frequent contacts: none listed.');
+  return L.join('\n');
+}
+function systemPrompt(p, lang) {
+  return `You are Billzilla, an assistant for a law firm that turns lawyers' rough work notes into professional time-entry narratives. You only draft narratives; you never bill.
+
+HOUSE STYLE GUIDE (follow strictly):
+"""
+${styleGuide}
+"""
+
+OUTPUT LANGUAGE: ${lang === 'es' ? 'Spanish (professional register, neutral Spanish)' : 'English (professional register)'}. Write every narrative in this language, whatever the language of the notes.
+
+CLIENT CONTEXT:
+${profileContext(p)}
+
+RULES FOR INITIALS AND NAMES:
+- Expand initials ONLY when they exactly match an entry in the contacts list above ("SR2" matches only "SR2"; "SR" matches only "SR"). Use full name and role on first mention.
+- If initials are not in the list, appear more than once in it, or the note makes the match doubtful, do NOT guess: write the initials in square brackets in the narrative (e.g. "[JP]") and add a flag of type "initials".
+- Never invent people, documents, dates, amounts or facts that are not in the notes or the client context.
+- Spell out abbreviations and internal shorthand (e.g. SPA = share purchase agreement / contrato de compraventa de acciones; CPs = conditions precedent / condiciones precedentes; disclosure schedules = anexos de revelación / disclosure schedules).
+- Start every narrative with a task noun ("Revisión de…", "Review of…"), never with "Asuntos", "Varios", "Work on" or a verb.
+
+EXAMPLES (contacts: AB = Ana Bravo, General Counsel of the client; AB2 = Andrés Bustos):
+- Note "call con AB sobre NDA" → Spanish: "Llamada con Ana Bravo, gerente legal del cliente, sobre el acuerdo de confidencialidad."
+- Note "reviewed SHA comments from AB2" → English: "Review of comments from Andrés Bustos on the shareholders' agreement."
+- Note "mail a XY sobre CPs" (XY not in contacts) → Spanish: "Correspondencia con [XY] sobre las condiciones precedentes." plus an "initials" flag.`;
+}
+function savedClientsDigest() {
+  if (!profiles.length) return '(no saved profiles)';
+  return profiles.map(p => `- id: ${p.id} | client: ${p.clientName || '?'} | matter: ${p.matterName || '?'} | contacts: ${(p.contacts || []).map(c => `${c.initials}=${c.name}`).join(', ') || 'none'} | description: ${(p.description || '').slice(0, 160)}`).join('\n');
+}
+function generatePrompt(notes, p, dist, total) {
+  const parts = [`Draft one time-entry narrative for each of these ${notes.length} notes:`, notes.map((n, i) => `${i + 1}. ${n}`).join('\n'), ''];
+  parts.push('For each entry, list issues in "flags": "vague" (the note is too general for a specific narrative), "multiple_tasks" (the note mixes several tasks: still draft ONE narrative for it, but flag it so the lawyer can split it), "initials" (unknown or ambiguous initials). Use an empty array when there are no issues.');
+  if (dist) parts.push(`TIME: the lawyer worked ${total.toFixed(1)} hours in total on these notes. Propose "hours" for each entry in 0.1 increments based on the type and complexity of each task (e.g. a short email takes less time than reviewing a long agreement or holding a meeting). The hours must add up to exactly ${total.toFixed(1)}.`);
+  else parts.push('TIME: do not propose hours; set "hours" to null.');
+  if (!p) parts.push(`CLIENT IDENTIFICATION: no client is selected. Try to identify the client and matter from names, initials and matter terms in the notes. Saved client profiles:\n${savedClientsDigest()}\nIf a saved profile matches, give its id. If the client seems to be one that is not saved, give your best reading of the name with "profile_id": null. If you cannot tell, set "client_guess" to null. Do not claim certainty you do not have.`);
+  parts.push(`Reply with ONLY a JSON object (no markdown, no comments) in this exact shape:
+{"client_guess": ${p ? 'null' : '{"profile_id": "id or null", "client": "client name", "matter": "matter or empty", "reason": "short reason in English"}'},
+ "entries": [{"index": 1, "narrative": "…", "hours": ${dist ? '1.0' : 'null'}, "flags": [{"type": "vague|multiple_tasks|initials", "message": "short explanation in English"}]}]}
+Return exactly ${notes.length} entries, in the same order as the notes.`);
+  return parts.join('\n');
+}
+const cleanNarr = s => String(s || '').replace(/\s+/g, ' ').trim().replace(/^\d+[.)]\s+/, '').replace(/^["“]+|["”]+$/g, '').trim();
+// Safety net: if the model left listed initials unexpanded, replace them with the contact's full name.
+function expandInitials(narr, p) {
+  const cs = (p?.contacts || []).filter(c => c.initials && c.name);
+  let out = narr;
+  for (const c of cs) {
+    const ini = c.initials.trim().toUpperCase();
+    if (cs.filter(o => o.initials.trim().toUpperCase() === ini).length > 1) continue;
+    out = out.replace(new RegExp('(^|[^\\[\\wÁÉÍÓÚÑ])' + ini.replace(/[^\w]/g, '') + '(?![\\w\\]])', 'g'), (m, pre) => pre + c.name);
+  }
+  return out;
+}
+function normFlags(arr) {
+  return (Array.isArray(arr) ? arr : []).filter(f => f && FLAG_LABELS[f.type] && f.type !== 'error')
+    .map(f => ({ type: f.type, message: String(f.message || '').trim() || FLAG_LABELS[f.type] }));
+}
+
+/* ===== Flags ===== */
+function localFlags(e, p) {
+  const out = [];
+  const contacts = (p?.contacts || []).filter(c => c.initials);
+  const ctxText = p ? [p.clientName, p.matterName, p.description, p.docSummary].join(' ') : '';
+  const seen = new Set();
+  for (const tok of e.note.match(/\b[A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ0-9]{1,4}\b/g) || []) {
+    if (seen.has(tok) || !/^[A-ZÁÉÍÓÚÑ]{2}/.test(tok)) continue;
+    seen.add(tok);
+    const matches = contacts.filter(c => c.initials.trim().toUpperCase() === tok);
+    if (matches.length === 1) {
+      const c = matches[0];
+      if (c.name && e.narrative && !e.narrative.toLowerCase().includes(c.name.toLowerCase()))
+        out.push({ type: 'initials', message: `The note mentions “${tok}” (${c.name}), but the narrative does not name ${c.name}. Check who is referred to.` });
+      if (!/\d$/.test(tok)) {
+        const twins = contacts.filter(o => o !== c && nameInitials(o.name) === tok);
+        if (twins.length) out.push({ type: 'initials', message: `“${tok}” is listed as ${c.name}, but ${twins.map(t => `${t.name} (${t.initials})`).join(', ')} has the same initials. Confirm who is meant.` });
+      }
+      continue;
+    }
+    if (matches.length > 1) { out.push({ type: 'initials', message: `“${tok}” is ambiguous: it matches ${matches.map(c => c.name).join(' and ')} in the contacts list.` }); continue; }
+    if (KNOWN_ABBR.has(tok)) continue;
+    if (ctxText && new RegExp('\\b' + tok + '\\b').test(ctxText)) continue;
+    const byName = contacts.filter(c => nameInitials(c.name) === tok);
+    if (byName.length === 1) out.push({ type: 'initials', message: `“${tok}” is not in the contacts list (it could be ${byName[0].name}). Confirm and add it to the profile.` });
+    else if (byName.length > 1) out.push({ type: 'initials', message: `“${tok}” is ambiguous: it could be ${byName.map(c => c.name).join(' or ')}.` });
+    else out.push({ type: 'initials', message: p ? `Unknown initials “${tok}”: not in this client's contacts list.` : `Initials “${tok}” cannot be expanded: no client profile is selected.` });
+  }
+  const ph = (e.narrative.match(/\[[^\]]{1,40}\]/g) || []).filter(x => !seen.has(x.slice(1, -1).trim()));
+  if (ph.length) out.push({ type: 'initials', message: `Complete the placeholder(s) in the narrative: ${ph.join(', ')}.` });
+  if (!e.part && /\+|;|\s&\s|\s\/\s|\b(y luego|y después|and then|además|plus)\b/i.test(e.note))
+    out.push({ type: 'multiple_tasks', message: 'This note seems to mix several tasks. Consider splitting it (one task per narrative).' });
+  const first = (e.narrative.match(/^[A-Za-zÁÉÍÓÚÑáéíóúñ]+/) || [''])[0];
+  if (/^(se|fue|fueron|hubo)$/i.test(first) || /(é|ó|aron|ieron|ed)$/i.test(first))
+    out.push({ type: 'style', message: `Starts with a verb (“${first}”). House style: start with a task noun, e.g. “Revisión de…” / “Review of…”. Edit or regenerate.` });
+  const noteWords = e.note.split(/\s+/).filter(Boolean).length;
+  const narrWords = e.narrative.split(/\s+/).filter(Boolean).length;
+  if (GENERIC_RE.test(e.note.trim()) || noteWords <= 1) out.push({ type: 'vague', message: 'The note is too general: add the document, topic or counterpart.' });
+  else if (e.narrative && narrWords < 5) out.push({ type: 'vague', message: 'The narrative is very short; consider making it more specific.' });
+  return out;
+}
+function entryFlags(e, p) {
+  const local = localFlags(e, p), ai = e.aiFlags || [];
+  const res = [];
+  if (!e.narrative) res.push({ type: 'error', message: 'No narrative was returned for this note. Click Regenerate.' });
+  for (const t of ['multiple_tasks', 'vague']) { const f = ai.find(x => x.type === t) || local.find(x => x.type === t); if (f) res.push(f); }
+  res.push(...local.filter(x => x.type === 'style'));
+  const li = local.filter(x => x.type === 'initials');
+  res.push(...(li.length ? li : ai.filter(x => x.type === 'initials')));
+  return res;
+}
+
+/* ===== Time distribution ===== */
+function distribute(totalHours, weights) {
+  const T = Math.round(totalHours * 10), n = weights.length;
+  if (!n) return [];
+  let w = weights.map(x => (isFinite(x) && x > 0) ? x : 0);
+  if (w.every(x => x === 0)) w = w.map(() => 1);
+  const base = T >= n ? 1 : 0;
+  const rem = T - base * n, sum = w.reduce((a, b) => a + b, 0);
+  const raw = w.map(x => x / sum * rem), fl = raw.map(Math.floor);
+  const left = rem - fl.reduce((a, b) => a + b, 0);
+  const order = raw.map((r, i) => [r - fl[i], w[i], i]).sort((a, b) => b[0] - a[0] || b[1] - a[1]);
+  for (let k = 0; k < left; k++) fl[order[k % n][2]]++;
+  return fl.map(x => x + base); // tenths
+}
+const sumTenths = () => state.entries.reduce((a, e) => a + (e.tenths || 0), 0);
+
+/* ===== Quick mode ===== */
+function refreshClientSelect() {
+  const sel = $('#q-client'), cur = sel.value;
+  sel.replaceChildren(el('option', { value: '' }, '— No client (auto-detect from notes) —'),
+    ...profiles.map(p => el('option', { value: p.id }, (p.clientName || 'Unnamed client') + (p.matterName ? ' — ' + p.matterName : ''))));
+  sel.value = getProfile(cur) ? cur : '';
+}
+function startQuick(profileId) {
+  show('home');
+  $('#q-client').value = profileId || '';
+  const p = getProfile(profileId); if (p) $('#q-lang').value = p.language || 'en';
+  $('#q-notes').focus();
+}
+function parseNotes() {
+  return $('#q-notes').value.split(/\r?\n/).map(s => s.replace(/^\s*(?:[-*•·]|\d+[.)])\s+/, '').trim()).filter(Boolean);
+}
+let busyTimer = null;
+function setBusy(on, text) {
+  clearInterval(busyTimer);
+  $('#q-status').hidden = !on; $('#q-cancel').hidden = !on;
+  $('#q-generate').disabled = on;
+  if (!on) return;
+  const t0 = Date.now();
+  const tick = () => { $('#q-status-text').textContent = `${busyText} (${Math.round((Date.now() - t0) / 1000)} s)`; };
+  busyText = text; tick(); busyTimer = setInterval(tick, 1000);
+}
+let busyText = '';
+function showError(msg) {
+  const box = $('#q-error');
+  if (!msg) { box.replaceChildren(); return; }
+  box.replaceChildren(el('div', { class: 'banner warn', style: 'margin:14px 0 0' },
+    el('div', { class: 'grow' }, el('strong', {}, 'The narratives could not be drafted. '), msg,
+      el('div', { class: 'small muted' }, 'Free AI models are sometimes busy or slow; trying again usually works.')),
+    el('button', { class: 'btn btn-sm btn-primary', onclick: generate }, 'Try again')));
+}
+async function generate() {
+  if (currentRun) return;
+  const notes = parseNotes();
+  if (!notes.length) { toast('Paste at least one note (one task per line).', 'warn'); $('#q-notes').focus(); return; }
+  if (notes.length > 40) { toast('Please keep it to 40 notes or fewer per batch.', 'warn'); return; }
+  const dist = $('#q-dist').checked;
+  const total = parseHours($('#q-total').value);
+  if (dist && !(total > 0)) { toast('Enter the total time worked for this list (e.g. 4.5) before generating.', 'warn'); $('#q-total').focus(); return; }
+  if (total > 0) $('#q-total').value = (Math.round(total * 10) / 10).toFixed(1);
+  Object.assign(state, { language: $('#q-lang').value, profileId: $('#q-client').value, distribute: dist, total: total > 0 ? Math.round(total * 10) / 10 : 0 });
+  const p = getProfile(state.profileId);
+  const label = `Drafting ${notes.length} narrative${notes.length > 1 ? 's' : ''} with free AI models…`;
+  showError(null);
+  setBusy(true, label);
+  currentRun = new AbortController();
+  try {
+    const data = await callAIJSON([{ role: 'system', content: systemPrompt(p, state.language) }, { role: 'user', content: generatePrompt(notes, p, dist, state.total) }],
+      d => Array.isArray(d.entries) && d.entries.length > 0, {
+        temperature: 0.3, maxTokens: 8000, signal: currentRun.signal,
+        onAttempt: (n, max, err) => { if (n > 1) busyText = `${err.message} Trying other free models (round ${n} of ${max})…`; }
+      });
+    state.entries = notes.map((note, i) => {
+      const r = data.entries.find(x => Number(x?.index) === i + 1) || data.entries[i] || {};
+      return { id: uid(), num: String(i + 1), note, narrative: expandInitials(cleanNarr(r.narrative), p), aiFlags: normFlags(r.flags), aiHours: parseHours(r.hours), tenths: null, approved: false, editing: false, busy: false, history: [] };
+    });
+    if (dist) distribute(state.total, state.entries.map(e => e.aiHours)).forEach((t, i) => state.entries[i].tenths = t);
+    state.clientGuess = p ? undefined : (data.client_guess || null);
+    renderResults();
+    if (window.innerWidth <= 860) $('#list-col').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch (e) {
+    if (e instanceof CancelledError) toast('Drafting cancelled.');
+    else showError(e.message);
+  }
+  finally { setBusy(false); currentRun = null; }
+}
+
+function renderResults() {
+  $('#results').hidden = !state.entries.length;
+  $('#list-empty').hidden = !!state.entries.length;
+  renderGuess();
+  renderEntries();
+  updateHoursUI();
+}
+// Pending entries keep their original order; approved ones go to the end, grayed, in order of approval.
+const approvedInOrder = () => state.entries.filter(e => e.approved).sort((a, b) => a.approvedAt - b.approvedAt);
+function renderEntries() {
+  const pending = state.entries.filter(e => !e.approved), done = approvedInOrder();
+  $('#entries').replaceChildren(...pending.map(renderEntry),
+    done.length ? el('div', { class: 'group-label' }, `Approved (${done.length}), in order of approval`) : null,
+    ...done.map(renderEntry));
+  updateCount();
+}
+let approvalSeq = 0;
+function setApproved(e, on) {
+  e.approved = on;
+  e.approvedAt = on ? Date.now() * 1000 + (approvalSeq++ % 1000) : null;
+}
+function toggleApprove(e) {
+  setApproved(e, !e.approved);
+  renderEntries(); renderApproved();
+}
+function renderApproved() {
+  const done = approvedInOrder();
+  // The box appears with the first approval, to the right of the list.
+  $('#approved-panel').hidden = !done.length;
+  $('#workspace').classList.toggle('has-approved', done.length > 0);
+  $('#ab-sub').textContent = done.length
+    ? `${done.length} narrative${done.length > 1 ? 's' : ''}${state.distribute ? ` · ${fmtH(done.reduce((a, e) => a + (e.tenths || 0), 0))} h` : ''}, in order of approval`
+    : '';
+  $('#copy-all').disabled = !done.length;
+  $('#ab-list').replaceChildren(...(done.length ? done.map(e => el('li', {},
+    state.distribute ? el('span', { class: 'ab-h' }, fmtH(e.tenths || 0) + ' h') : el('span'),
+    el('span', {}, e.narrative),
+    el('button', { class: 'ab-x', title: 'Undo approval', 'aria-label': 'Undo approval', onclick: () => toggleApprove(e) }, '×')))
+    : [el('li', { class: 'ab-empty', style: 'display:block' }, 'Approve narratives on the left and they will appear here, ready to copy.')]));
+}
+function renderGuess() {
+  const g = state.clientGuess, box = $('#guess');
+  if (g === undefined) { box.replaceChildren(); return; }
+  const prof = g && g.profile_id ? getProfile(g.profile_id) : null;
+  const dismiss = el('button', { class: 'btn btn-sm btn-ghost', onclick: () => { state.clientGuess = undefined; renderGuess(); } }, 'Dismiss');
+  if (prof) {
+    box.replaceChildren(el('div', { class: 'banner info' },
+      el('div', { class: 'grow' }, el('strong', {}, 'Is this for ', (prof.clientName || 'this client') + (prof.matterName ? ' — ' + prof.matterName : ''), '?'), el('div', { class: 'small muted' }, g.reason || 'Identified from the notes.')),
+      el('button', { class: 'btn btn-sm btn-primary', onclick: () => { $('#q-client').value = prof.id; state.clientGuess = undefined; generate(); } }, 'Yes, use this client and redraft'),
+      el('button', { class: 'btn btn-sm', onclick: () => { state.clientGuess = undefined; renderGuess(); toast('OK, keeping drafts without a client profile.'); } }, 'No')));
+  } else if (g && (g.client || g.matter)) {
+    box.replaceChildren(el('div', { class: 'banner info' },
+      el('div', { class: 'grow' }, el('strong', {}, 'Possible client: ', g.client || '?', g.matter ? ' — ' + g.matter : ''), el('div', { class: 'small muted' }, (g.reason ? g.reason + ' ' : '') + 'This client has no saved profile. Please confirm.')),
+      el('button', { class: 'btn btn-sm btn-primary', onclick: () => { openClientForm(null); $('#cf-client').value = g.client || ''; $('#cf-matter').value = g.matter || ''; $$('input[name=cf-lang]').forEach(r => r.checked = r.value === state.language); } }, 'Confirm & create profile'),
+      dismiss));
+  } else {
+    box.replaceChildren(el('div', { class: 'banner warn' },
+      el('div', { class: 'grow' }, 'Billzilla could not identify the client from these notes. Select a client profile to expand initials and add context.'), dismiss));
+  }
+}
+function updateCount() {
+  const n = state.entries.filter(e => e.approved).length;
+  $('#approved-count').textContent = `${n} of ${state.entries.length} approved`;
+}
+function rerenderEntry(e) {
+  const node = $(`.entry[data-id="${e.id}"]`);
+  if (node) node.replaceWith(renderEntry(e));
+  updateCount();
+}
+function renderEntry(e) {
+  const p = getProfile(state.profileId);
+  const hoursInput = el('input', { type: 'text', inputmode: 'decimal', 'aria-label': `Hours for entry ${e.num}`, value: e.tenths != null ? fmtH(e.tenths) : '' });
+  hoursInput.addEventListener('input', () => { const v = parseHours(hoursInput.value); if (v >= 0) { e.tenths = Math.round(v * 10); updateHoursUI(); } });
+  hoursInput.addEventListener('blur', () => { hoursInput.value = fmtH(e.tenths || 0); });
+
+  let body;
+  if (e.editing) {
+    const ta = el('textarea', { 'aria-label': 'Edit narrative' }); ta.value = e.narrative;
+    setTimeout(() => { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }, 0);
+    body = [ta, el('div', { class: 'entry-actions' },
+      el('button', { class: 'btn btn-sm btn-primary', onclick: () => { e.narrative = cleanNarr(ta.value); e.aiFlags = []; e.editing = false; rerenderEntry(e); updateHoursUI(); } }, 'Save'),
+      el('button', { class: 'btn btn-sm', onclick: () => { e.editing = false; rerenderEntry(e); } }, 'Cancel'))];
+  } else {
+    const flags = entryFlags(e, p);
+    body = [el('p', { class: 'narrative' }, e.narrative || '—'),
+      flags.length ? el('div', { class: 'flags' }, flags.map(f => el('div', { class: 'flag' + (f.type === 'error' ? ' error' : '') }, el('b', {}, '⚑ ' + FLAG_LABELS[f.type]), el('span', {}, f.message)))) : null,
+      el('div', { class: 'entry-actions' },
+        e.approved
+          ? el('button', { class: 'btn btn-sm', 'aria-pressed': 'true', disabled: e.busy, onclick: () => toggleApprove(e) }, '✓ Approved · undo')
+          : el('button', { class: 'btn btn-sm btn-ok', 'aria-pressed': 'false', disabled: e.busy || !e.narrative, onclick: () => toggleApprove(e) }, 'Approve'),
+        el('button', { class: 'btn btn-sm', disabled: e.busy, onclick: () => { e.editing = true; rerenderEntry(e); } }, 'Edit'),
+        el('button', { class: 'btn btn-sm', disabled: e.busy, onclick: () => regenerate(e) }, e.busy === 'regen' ? [el('span', { class: 'spin' }), 'Regenerating…'] : '↻ Regenerate'),
+        flags.some(f => f.type === 'multiple_tasks') ? el('button', { class: 'btn btn-sm btn-ghost', disabled: e.busy, onclick: () => splitEntry(e) }, e.busy === 'split' ? [el('span', { class: 'spin' }), 'Splitting…'] : 'Split into separate entries') : null)];
+  }
+  return el('article', { class: 'entry' + (e.approved ? ' approved' : ''), 'data-id': e.id },
+    el('div', { class: 'entry-head' },
+      el('span', { class: 'entry-num' }, e.num),
+      el('span', { class: 'entry-dot', title: 'Colour in the hours chart', style: `background:${sliceColor(e)}` }),
+      el('div', { class: 'entry-note', title: 'Original note' }, e.part ? `${e.note} (part ${e.part})` : e.note),
+      el('label', { class: 'hours' }, hoursInput, 'h')),
+    body);
+}
+async function regenerate(e) {
+  e.busy = 'regen'; rerenderEntry(e);
+  try {
+    const p = getProfile(state.profileId);
+    const prev = [...e.history, e.narrative].filter(Boolean);
+    const user = `Note: ${e.note}${e.part ? ` (this entry covers part ${e.part} of the note: "${e.narrative}")` : ''}
+${prev.length ? 'Earlier versions (do not repeat their wording):\n' + prev.map(h => '- ' + h).join('\n') : ''}
+Write ONE new alternative narrative for this note that follows the house style guide, with different wording from the earlier versions. Keep the same facts; do not add new ones.
+Reply with ONLY JSON: {"narrative": "…", "flags": [{"type": "vague|multiple_tasks|initials", "message": "short explanation in English"}]}`;
+    const d = await callAIJSON([{ role: 'system', content: systemPrompt(p, state.language) }, { role: 'user', content: user }],
+      d => typeof d.narrative === 'string' && d.narrative.trim(), { temperature: 0.9, maxTokens: 3000 });
+    if (e.narrative) e.history.push(e.narrative);
+    e.narrative = expandInitials(cleanNarr(d.narrative), p); e.aiFlags = normFlags(d.flags); setApproved(e, false);
+  } catch (err) { toast(err.message, 'error'); }
+  finally { e.busy = false; renderEntries(); updateHoursUI(); }
+}
+async function splitEntry(e) {
+  e.busy = 'split'; rerenderEntry(e);
+  try {
+    const p = getProfile(state.profileId);
+    const user = `Note: ${e.note}
+This note mixes several tasks. Split it into separate entries, one task per narrative, following the house style guide. Do not invent tasks that are not in the note.
+Reply with ONLY JSON: {"entries": [{"narrative": "…", "flags": [{"type": "vague|initials", "message": "short explanation in English"}]}]}`;
+    const d = await callAIJSON([{ role: 'system', content: systemPrompt(p, state.language) }, { role: 'user', content: user }],
+      d => Array.isArray(d.entries) && d.entries.length >= 1, { temperature: 0.3, maxTokens: 4000 });
+    const parts = d.entries.filter(x => x && x.narrative).slice(0, 6);
+    if (parts.length < 2) { toast('The AI found only one task in this note.', 'warn'); return; }
+    const tenths = state.distribute ? distribute((e.tenths || 0) / 10, parts.map(() => 1)) : parts.map(() => null);
+    const news = parts.map((x, k) => ({ id: uid(), num: `${e.num}.${k + 1}`, note: e.note, part: `${k + 1}/${parts.length}`, narrative: expandInitials(cleanNarr(x.narrative), p), aiFlags: normFlags(x.flags).filter(f => f.type !== 'multiple_tasks'), tenths: tenths[k], approved: false, editing: false, busy: false, history: [] }));
+    state.entries.splice(state.entries.indexOf(e), 1, ...news);
+    e.busy = false; renderResults(); return;
+  } catch (err) { toast(err.message, 'error'); }
+  e.busy = false; rerenderEntry(e);
+}
+
+// Categorical palette (validated default order, assigned by task, never cycled).
+// More than 8 tasks: tasks 8+ fold into a gray "Other" slice.
+const PIE_COLORS = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#4a3aa7', '#e34948'];
+const PIE_OTHER = '#a8a196';
+function sliceColor(e) {
+  const i = state.entries.indexOf(e), n = state.entries.length;
+  if (n > PIE_COLORS.length && i >= PIE_COLORS.length - 1) return PIE_OTHER;
+  return PIE_COLORS[i] || PIE_OTHER;
+}
+function pieSlices() {
+  const n = state.entries.length, cap = PIE_COLORS.length;
+  const own = n > cap ? state.entries.slice(0, cap - 1) : state.entries;
+  const slices = own.map(e => ({ key: e.id, num: e.num, label: e.narrative || e.note, t: e.tenths || 0, color: sliceColor(e) }));
+  if (n > cap) {
+    const rest = state.entries.slice(cap - 1);
+    slices.push({ key: 'other', num: '…', label: `Other: tasks ${rest[0].num}–${rest[rest.length - 1].num}`, t: rest.reduce((a, e) => a + (e.tenths || 0), 0), color: PIE_OTHER });
+  }
+  return slices;
+}
+function renderPie() {
+  const NS = 'http://www.w3.org/2000/svg', R = 96, C = 100;
+  const slices = pieSlices(), S = slices.reduce((a, s) => a + s.t, 0);
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', '0 0 200 200');
+  svg.setAttribute('role', 'img');
+  svg.setAttribute('aria-label', 'Pie chart of hours per task: ' + slices.map(s => `task ${s.num} ${fmtH(s.t)} h`).join(', '));
+  const wrap = $('#pie'), tip = el('div', { class: 'pie-tip', hidden: true });
+  const highlight = key => {
+    wrap.classList.toggle('hovering', key != null);
+    $$('.slice', wrap).forEach(p => p.classList.toggle('on', p.dataset.key === key));
+    $$('#legend li').forEach(li => li.classList.toggle('on', li.dataset.key === key));
+  };
+  const showTip = (s, ev) => {
+    const r = wrap.getBoundingClientRect();
+    tip.textContent = `${s.num}. ${s.label} — ${fmtH(s.t)} h (${S ? Math.round(s.t / S * 100) : 0}%)`;
+    tip.style.left = (ev.clientX - r.left) + 'px'; tip.style.top = (ev.clientY - r.top) + 'px';
+    tip.hidden = false;
+  };
+  if (!S) {
+    const c = document.createElementNS(NS, 'circle');
+    c.setAttribute('cx', C); c.setAttribute('cy', C); c.setAttribute('r', R); c.setAttribute('fill', '#ece8e0');
+    svg.append(c);
+  } else {
+    let a0 = -Math.PI / 2;
+    for (const s of slices) {
+      if (!s.t) continue;
+      const frac = s.t / S, a1 = a0 + frac * 2 * Math.PI;
+      let node;
+      if (frac >= 0.9999) {
+        node = document.createElementNS(NS, 'circle');
+        node.setAttribute('cx', C); node.setAttribute('cy', C); node.setAttribute('r', R);
+      } else {
+        const x0 = C + R * Math.cos(a0), y0 = C + R * Math.sin(a0), x1 = C + R * Math.cos(a1), y1 = C + R * Math.sin(a1);
+        node = document.createElementNS(NS, 'path');
+        node.setAttribute('d', `M${C},${C} L${x0.toFixed(2)},${y0.toFixed(2)} A${R},${R} 0 ${frac > 0.5 ? 1 : 0} 1 ${x1.toFixed(2)},${y1.toFixed(2)} Z`);
+      }
+      node.setAttribute('fill', s.color);
+      node.setAttribute('stroke', '#fff'); node.setAttribute('stroke-width', '2'); node.setAttribute('stroke-linejoin', 'round');
+      node.setAttribute('class', 'slice'); node.dataset.key = s.key;
+      node.addEventListener('mousemove', ev => { highlight(s.key); showTip(s, ev); });
+      node.addEventListener('mouseleave', () => { highlight(null); tip.hidden = true; });
+      svg.append(node);
+      a0 = a1;
+    }
+  }
+  wrap.replaceChildren(svg, tip);
+  $('#legend').replaceChildren(...slices.slice().sort((a, b) => b.t - a.t).map(s => {
+    const li = el('li', { 'data-key': s.key, title: s.label },
+      el('span', { class: 'sw', style: `background:${s.color}` }),
+      el('span', { class: 'lnum' }, s.num + '.'),
+      el('span', { class: 'ltxt' }, s.label),
+      el('span', { class: 'lval' }, fmtH(s.t) + ' h', el('span', { class: 'lpct' }, `${S ? Math.round(s.t / S * 100) : 0}%`)));
+    li.addEventListener('mouseenter', () => highlight(s.key));
+    li.addEventListener('mouseleave', () => highlight(null));
+    return li;
+  }));
+}
+function updateHoursUI() {
+  $('#workspace').classList.toggle('no-hours', !state.distribute);
+  renderApproved();
+  const panel = $('#hours-panel');
+  panel.hidden = !state.distribute || !state.entries.length;
+  if (panel.hidden) return;
+  const T = Math.round(state.total * 10), S = sumTenths();
+  $('#chart-total').textContent = `Total: ${fmtH(T)} h`;
+  $('#chart-sub').textContent = `${state.entries.length} task${state.entries.length > 1 ? 's' : ''}, hours per task`;
+  const warn = $('#sum-warn');
+  if (S !== T) {
+    warn.replaceChildren(el('div', { class: 'sum-warn' },
+      el('span', {}, `⚠ The hours add up to ${fmtH(S)} h: ${S < T ? fmtH(T - S) + ' h short of' : fmtH(S - T) + ' h over'} the ${fmtH(T)} h total.`),
+      el('button', { class: 'btn btn-sm', onclick: rebalance }, 'Rebalance to total')));
+  } else warn.replaceChildren(el('p', { class: 'sum-ok' }, `✓ Hours add up exactly to the ${fmtH(T)} h total.`));
+  renderPie();
+}
+function syncHourInputs() {
+  for (const e of state.entries) { const inp = $(`.entry[data-id="${e.id}"] .hours input`); if (inp) inp.value = fmtH(e.tenths || 0); }
+}
+function rebalance() {
+  const T = parseHours($('#q-total').value);
+  if (!(T > 0)) { toast('Enter the total time worked first.', 'warn'); return; }
+  state.total = Math.round(T * 10) / 10;
+  const cur = state.entries.map(e => e.tenths || 0);
+  distribute(state.total, cur.some(x => x > 0) ? cur : cur.map(() => 1)).forEach((t, i) => state.entries[i].tenths = t);
+  syncHourInputs();
+  updateHoursUI();
+}
+
+async function translateToEnglish() {
+  const items = state.entries.filter(e => e.narrative);
+  if (!items.length || currentRun) return;
+  const btn = $('#translate-en');
+  btn.disabled = true; btn.replaceChildren(el('span', { class: 'spin' }), 'Translating…');
+  try {
+    const p = getProfile(state.profileId);
+    const user = `Translate these time-entry narratives from Spanish into English. Follow the house style guide: each narrative must start with an English task noun ("Review of…", "Drafting of…", "Call with…", "Meeting with…", "Coordination of…", "Analysis of…", "Correspondence with…", "Comments on…"). Keep people's names, roles, company names and any placeholders in square brackets exactly as they are. Do not add or remove facts. If a narrative is already in English, return it unchanged.
+${items.map(e => `- id ${e.id}: ${e.narrative}`).join('\n')}
+Reply with ONLY JSON: {"translations": [{"id": "…", "text": "…"}]}`;
+    const d = await callAIJSON([{ role: 'system', content: systemPrompt(p, 'en') }, { role: 'user', content: user }],
+      d => Array.isArray(d.translations) && d.translations.length >= items.length, { temperature: 0.2, maxTokens: 6000 });
+    items.forEach((e, k) => {
+      const t = d.translations.find(x => x?.id === e.id) || d.translations[k];
+      const text = cleanNarr(t?.text);
+      if (text && text !== e.narrative) { e.history.push(e.narrative); e.narrative = text; }
+    });
+    state.language = 'en'; $('#q-lang').value = 'en';
+    renderEntries(); updateHoursUI();
+    toast(`Translated ${items.length} narrative${items.length > 1 ? 's' : ''} into English.`, 'ok');
+  } catch (err) { toast(err.message, 'error'); }
+  finally { btn.disabled = false; btn.textContent = 'Translate ES → EN'; }
+}
+
+async function copyAll() {
+  const ap = approvedInOrder().filter(e => e.narrative);
+  if (!ap.length) { toast('Approve at least one narrative first.', 'warn'); return; }
+  const text = ap.map(e => state.distribute ? `${fmtH(e.tenths || 0)} h\t${e.narrative}` : e.narrative).join('\n');
+  toast(await copyText(text) ? `Copied ${ap.length} approved narrative${ap.length > 1 ? 's' : ''}.` : 'Could not copy to the clipboard.', 'ok');
+}
+
+/* ===== Example ===== */
+function loadExample() {
+  const ex = structuredClone(EXAMPLE_PROFILE);
+  const i = profiles.findIndex(p => p.id === ex.id);
+  if (i >= 0) profiles[i] = ex; else profiles.unshift(ex);
+  saveProfiles();
+  show('home');
+  $('#q-client').value = ex.id; $('#q-lang').value = 'en';
+  $('#q-notes').value = EXAMPLE_NOTES; $('#q-total').value = '4.5'; $('#q-dist').checked = true;
+  state.entries = []; state.clientGuess = undefined; renderResults();
+  toast('Example loaded (fictional client Acme Holdings). Drafting narratives…', 'ok');
+  generate();
+}
+
+/* ===== Style guide ===== */
+function openStyle() { $('#sg-text').value = styleGuide; $('#dlg-style').showModal(); }
+
+/* ===== Share / import ===== */
+let shareProfile = null, pendingImport = null;
+function sharePayload(p) { const { id, ...rest } = p; return { app: 'billzilla', v: 1, profile: { id, ...rest }, styleGuide }; }
+function toB64Url(str) { const bytes = new TextEncoder().encode(str); let bin = ''; bytes.forEach(b => bin += String.fromCharCode(b)); return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+function fromB64Url(s) { const bin = atob(s.replace(/-/g, '+').replace(/_/g, '/')); return new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0))); }
+function openShare(p) {
+  shareProfile = p;
+  $('#share-title').textContent = (p.clientName || 'Unnamed client') + (p.matterName ? ' — ' + p.matterName : '');
+  $('#dlg-share').showModal();
+}
+function openImport(obj) {
+  if (!obj || obj.app !== 'billzilla' || !obj.profile) { toast('This is not a Billzilla profile.', 'error'); return; }
+  pendingImport = obj;
+  const p = obj.profile;
+  $('#imp-summary').replaceChildren(el('strong', {}, (p.clientName || 'Unnamed client') + (p.matterName ? ' — ' + p.matterName : '')), el('br'),
+    el('span', { class: 'muted small' }, `${(p.contacts || []).length} contact(s)${p.docSummary ? ', document summary' : ''}${getProfile(p.id) ? '. A profile with the same id exists and will be replaced.' : ''}`));
+  const hasStyle = typeof obj.styleGuide === 'string' && obj.styleGuide.trim() && obj.styleGuide !== styleGuide;
+  $('#imp-style-row').hidden = !hasStyle; $('#imp-style').checked = !!hasStyle;
+  $('#dlg-import').showModal();
+}
+function doImport() {
+  const obj = pendingImport; if (!obj) return;
+  const src = obj.profile;
+  const p = {
+    id: typeof src.id === 'string' && src.id ? src.id : uid(),
+    clientName: String(src.clientName || ''), matterName: String(src.matterName || ''),
+    workType: WORK_TYPES.some(w => w[0] === src.workType) ? src.workType : '',
+    description: String(src.description || ''), docSummary: String(src.docSummary || ''),
+    docNames: Array.isArray(src.docNames) ? src.docNames.map(String) : [],
+    contacts: (Array.isArray(src.contacts) ? src.contacts : []).map(c => ({ initials: String(c.initials || '').toUpperCase(), name: String(c.name || ''), role: String(c.role || '') })),
+    language: src.language === 'es' ? 'es' : 'en'
+  };
+  const i = profiles.findIndex(x => x.id === p.id);
+  if (i >= 0) profiles[i] = p; else profiles.unshift(p);
+  saveProfiles();
+  if (!$('#imp-style-row').hidden && $('#imp-style').checked) { styleGuide = obj.styleGuide; store.set(LS.style, styleGuide); }
+  $('#dlg-import').close(); pendingImport = null;
+  show('home'); toast('Profile imported.', 'ok');
+}
+function checkHashImport() {
+  const m = location.hash.match(/^#import=(.+)$/);
+  if (!m) return;
+  try { openImport(JSON.parse(fromB64Url(m[1]))); } catch { toast('This share link is invalid or incomplete.', 'error'); }
+  history.replaceState(null, '', location.pathname + location.search);
+}
+
+/* ===== Wiring ===== */
+function init() {
+  $('#cf-type').append(...WORK_TYPES.map(([v, l]) => el('option', { value: v }, l)));
+  $('#keywarn').hidden = hasKey();
+  const goHome = () => show('home');
+  $('#brand').onclick = goHome; $('#nav-home').onclick = goHome;
+  $('#nav-style').onclick = openStyle;
+  $('#nav-example').onclick = loadExample; $('#q-example').onclick = loadExample;
+  $('#new-client').onclick = () => openClientForm(null);
+  $('#q-cancel').onclick = () => { if (currentRun) currentRun.abort(); };
+
+  $('#cf-add-contact').onclick = () => addContactRow();
+  $('#client-form').onsubmit = ev => { ev.preventDefault(); saveClient(false); };
+  $('#cf-save-draft').onclick = () => saveClient(true);
+  $('#cf-cancel').onclick = goHome;
+  $('#cf-files').onchange = ev => handleFiles(ev.target.files);
+  const dz = $('#dropzone');
+  dz.addEventListener('dragover', ev => { ev.preventDefault(); dz.classList.add('drag'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+  dz.addEventListener('drop', ev => { ev.preventDefault(); dz.classList.remove('drag'); handleFiles(ev.dataTransfer.files); });
+
+  $('#q-client').onchange = () => { const p = getProfile($('#q-client').value); if (p) $('#q-lang').value = p.language || 'en'; };
+  $('#q-generate').onclick = generate;
+  $('#q-notes').addEventListener('keydown', ev => { if (ev.key === 'Enter' && (ev.ctrlKey || ev.metaKey)) generate(); });
+  $('#q-dist').onchange = () => {
+    if (!state.entries.length) return;
+    state.distribute = $('#q-dist').checked;
+    if (state.distribute) {
+      const T = parseHours($('#q-total').value);
+      if (T > 0) state.total = Math.round(T * 10) / 10;
+      if (!(state.total > 0)) { toast('Enter the total time worked to see the distribution.', 'warn'); $('#q-total').focus(); }
+      if (state.entries.every(e => e.tenths == null)) distribute(state.total, state.entries.map(e => e.aiHours)).forEach((t, i) => state.entries[i].tenths = t);
+      syncHourInputs();
+    }
+    updateHoursUI();
+  };
+  $('#q-total').addEventListener('input', () => { const T = parseHours($('#q-total').value); if (state.entries.length && T > 0) { state.total = Math.round(T * 10) / 10; updateHoursUI(); } });
+  $('#approve-all').onclick = () => { state.entries.forEach(e => { if (e.narrative && !e.approved && !e.editing) setApproved(e, true); }); renderEntries(); renderApproved(); };
+  $('#copy-all').onclick = copyAll;
+  $('#translate-en').onclick = translateToEnglish;
+
+  $('#sg-save').onclick = () => { const v = $('#sg-text').value.trim(); styleGuide = v || DEFAULT_STYLE; store.set(LS.style, styleGuide); $('#dlg-style').close(); toast('Style guide saved.', 'ok'); };
+  $('#sg-reset').onclick = () => { $('#sg-text').value = DEFAULT_STYLE; };
+
+  $('#share-link').onclick = async () => {
+    const url = location.href.split('#')[0] + '#import=' + toB64Url(JSON.stringify(sharePayload(shareProfile)));
+    toast(await copyText(url) ? 'Share link copied.' : 'Could not copy the link.', 'ok');
+  };
+  $('#share-download').onclick = () => {
+    const blob = new Blob([JSON.stringify(sharePayload(shareProfile), null, 2)], { type: 'application/json' });
+    const a = el('a', { href: URL.createObjectURL(blob), download: `billzilla-${(shareProfile.clientName || 'client').replace(/[^\w-]+/g, '-').toLowerCase()}.json` });
+    document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  };
+  $('#import-file').onchange = async ev => {
+    const f = ev.target.files[0]; ev.target.value = '';
+    if (!f) return;
+    try { openImport(JSON.parse(await f.text())); } catch { toast('Could not read this file as a Billzilla profile.', 'error'); }
+  };
+  $('#imp-go').onclick = doImport;
+  window.addEventListener('hashchange', checkHashImport);
+
+  show('home');
+  checkHashImport();
+}
+init();
+</script>
+</body>
+</html>
